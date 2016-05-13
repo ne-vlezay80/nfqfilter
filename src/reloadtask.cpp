@@ -80,19 +80,24 @@ void ReloadTask::runTask()
 
 			atm_new = new AhoCorasickPlus();
 			dm_new = new DomainsMap;
+			UrlsElementsMap *uem = new UrlsElementsMap;
+			UrlsElementsMap *to_del_uem;
 			try
 			{
-				_parent->loadURLs(_parent->getURLsFile(),atm_new,dm_new);
+				_parent->loadURLs(_parent->getURLsFile(),atm_new,dm_new,uem);
 				atm_new->finalize();
 				{
-					Poco::Mutex::ScopedLock lock(nfqFilter::_domainMapMutex);
+					Poco::Mutex::ScopedLock lock(nfqFilter::_urlMapMutex);
 					to_del_atm = nfqFilter::atm;
 					to_del_dm = nfqFilter::_domainsUrlsMap;
+					to_del_uem = nfqFilter::_urlsElementsMap;
 					nfqFilter::atm = atm_new;
 					nfqFilter::_domainsUrlsMap = dm_new;
+					nfqFilter::_urlsElementsMap = uem;
 				}
 				delete to_del_atm;
 				delete to_del_dm;
+				delete to_del_uem;
 				_logger.information("Reloaded data for urls list");
 			} catch (Poco::Exception &excep)
 			{

@@ -45,6 +45,7 @@
 
 typedef Poco::HashMap<unsigned int, std::string> DomainsMap;
 typedef Poco::HashMap<std::string,int> UrlsMap;
+typedef Poco::HashMap<unsigned int, unsigned short> UrlsElementsMap;
 
 typedef std::map<Poco::Net::IPAddress,std::set<unsigned short>> IPPortMap;
 
@@ -84,6 +85,9 @@ public:
 	static AhoCorasickPlus *atm_ssl;
 	static AhoCorasickPlus *atm_domains;
 
+	static Poco::Mutex _urlsElementsMapMutex;
+	static UrlsElementsMap *_urlsElementsMap;
+
 	std::string &getSSLFile()
 	{
 		return _sslFile;
@@ -110,7 +114,7 @@ public:
 	}
 
 	void loadDomains(std::string &fn, AhoCorasickPlus *_dm_atm,DomainsMap *_dm_map);
-	void loadURLs(std::string &fn, AhoCorasickPlus *dm_atm,DomainsMap *dm_map);
+	void loadURLs(std::string &fn, AhoCorasickPlus *dm_atm,DomainsMap *dm_map,UrlsElementsMap *uem);
 	void loadHosts(std::string &fn,IPPortMap *ippm);
 	void loadSSLIP(std::string &fn, SSLIps *sslips);
 protected:

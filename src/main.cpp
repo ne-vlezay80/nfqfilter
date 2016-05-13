@@ -19,6 +19,7 @@
 
 #include <iostream>
 #include <Poco/NumberParser.h>
+#include <Poco/URI.h>
 #include "main.h"
 #include "nfqstatistictask.h"
 #include "qdpi.h"
@@ -36,6 +37,9 @@ Poco::RWLock nfqFilter::_ipportMapMutex;
 IPPortMap *nfqFilter::_ipportMap = new IPPortMap;
 Poco::RWLock nfqFilter::_sslIpsSetMutex;
 SSLIps    *nfqFilter::_sslIpsSet = new SSLIps;
+
+Poco::Mutex nfqFilter::_urlsElementsMapMutex;
+UrlsElementsMap *nfqFilter::_urlsElementsMap = new UrlsElementsMap;
 
 Poco::Mutex nfqFilter::_urlMapMutex;
 
@@ -147,7 +151,7 @@ void nfqFilter::initialize(Application& self)
 	atm_ssl->finalize();
 
 	atm=new AhoCorasickPlus();
-	loadURLs(_urlsFile,atm,_domainsUrlsMap);
+	loadURLs(_urlsFile,atm,_domainsUrlsMap,_urlsElementsMap);
 	atm->finalize();
 
 
@@ -310,7 +314,7 @@ void nfqFilter::loadDomains(std::string &fn, AhoCorasickPlus *dm_atm,DomainsMap 
 	df.close();
 }
 
-void nfqFilter::loadURLs(std::string &fn, AhoCorasickPlus *dm_atm,DomainsMap *dm_map)
+void nfqFilter::loadURLs(std::string &fn, AhoCorasickPlus *dm_atm,DomainsMap *dm_map, UrlsElementsMap *uem)
 {
 	Poco::FileInputStream uf(fn);
 	if(uf.good())
@@ -345,6 +349,14 @@ void nfqFilter::loadURLs(std::string &fn, AhoCorasickPlus *dm_atm,DomainsMap *dm
 						} else {
 							logger().debug("Updated domain: '%s' from line %d from file %s",str,lineno,fn);
 						}
+						str.insert(0,"http://");
+						Poco::URI uri(str);
+						std::vector<std::string> pths;
+						uri.getPathSegments(pths);
+						unsigned short sz=pths.size();
+						if(!sz)
+							sz=1;
+						uem->insert(UrlsElementsMap::ValueType(lineno,sz));
 					} else {
 						logger().fatal("Bad url format in line %d in file %s",lineno,fn);
 						throw Poco::Exception("Bad url format");

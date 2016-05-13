@@ -383,6 +383,7 @@ void PktAnalyzer::analyzer(Packet &pkt)
 		if(flow->http.url)
 		{
 			std::string uri;
+			unsigned short n_paths;
 			if(dot_del)
 				uri_o.erase(dot_del,1);
 			try
@@ -390,6 +391,9 @@ void PktAnalyzer::analyzer(Packet &pkt)
 				uri_o.insert(0,"http://");
 				Poco::URI uri_p(uri_o);
 				uri_p.normalize();
+				std::vector<std::string> pths;
+				uri_p.getPathSegments(pths);
+				n_paths=pths.size();
 				uri.assign(uri_p.toString());
 				uri.erase(0,7);
 				if(_config.url_decode)
@@ -435,6 +439,16 @@ void PktAnalyzer::analyzer(Packet &pkt)
 								}
 							}
 						}
+					}
+				}
+				if(found)
+				{
+					
+					UrlsElementsMap::Iterator it=nfqFilter::_urlsElementsMap->find(match.id);
+					if(it != nfqFilter::_urlsElementsMap->end())
+					{
+						if(it->second < n_paths)
+							found=false;
 					}
 				}
 			}
